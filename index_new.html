@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Карта Путешественника — Секреты Енисея</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Шрифты -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Fredoka:wght@700&display=swap" rel="stylesheet">
+  <!-- Application Styles -->
+  <link rel="stylesheet" href="styles_new.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Экран приветствия -->
+    <div id="welcomeScreen" class="welcome-screen">
+      <div class="welcome-content">
+        <h1 class="welcome-title">Добро пожаловать в Секреты Енисея</h1>
+        <p class="welcome-subtitle">Отправьтесь в увлекательное путешествие с юга на север Красноярского края</p>
+        <button class="btn btn-start" onclick="startJourney()">Начать путешествие</button>
+      </div>
+    </div>
+
+    <!-- Полноэкранная карта -->
+    <main id="map"></main>
+
+    <!-- Полноэкранный слайдер локации -->
+    <div id="locationSlider" class="location-slider">
+      <div class="slider-content">
+        <button class="close-btn" onclick="closeLocationSlider()">✕</button>
+
+        <div class="location-info">
+          <div class="location-image">
+            <img id="sliderImage" src="" alt="">
+          </div>
+
+          <div class="location-details">
+            <h2 id="sliderTitle"></h2>
+            <p id="sliderDescription"></p>
+
+            <div class="progress-section">
+              <div class="progress-bar">
+                <div id="sliderProgress"></div>
+              </div>
+              <div class="stamps-collected">
+                <span id="stampsCount">0</span> из <span id="totalStamps">12</span> печатей собрано
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <button id="collectBtn" class="btn btn-collect" onclick="collectCurrentStamp()">
+                Забрать печать
+              </button>
+              <button id="nextLocationBtn" class="btn btn-next" onclick="proceedToNext()">
+                Следующая точка ⟶
+              </button>
+            </div>
+
+            <div class="navigation-controls">
+              <button class="btn btn-nav" onclick="prevStop()">⟵ Предыдущая</button>
+              <button class="btn btn-nav" onclick="nextStop()">Следующая ⟶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* =================== ТОЧКИ (с описаниями) — МАРШРУТ С ЮГА НА СЕВЕР =================== */
+const stops=[
+  {id:'shushenskoye',title:'🏡 «Шушенское»',coords:[53.329,91.936],
+   desc:'Этнодеревня-музей: избы, ремёсла, печи и ярмарки. История, в которую можно войти и потрогать.',
+   img:'https://placehold.co/600x360?text=%D0%A8%D1%83%D1%88%D0%B5%D0%BD%D1%81%D0%BA%D0%BE%D0%B5'},
+  {id:'stolby',title:'🏔️ Заповедник «Столбы»',coords:[55.963,92.779],
+   desc:'Скалы-великаны и тропы «столбизма». Кедровники, ручьи, видовые «карнизы». От прогулочных троп до серьёзных лазаний.',
+   img:'https://placehold.co/600x360?text=%D0%A1%D1%82%D0%BE%D0%BB%D0%B1%D1%8B'},
+  {id:'dam',title:'⚡ Красноярская ГЭС',coords:[55.958,92.356],
+   desc:'Дуга плотины и энергетика Ангаро-Енисейского каскада. Зимой — туман и «тёплая» вода; летом — смотровые и техно-виды.',
+   img:'https://placehold.co/600x360?text=%D0%93%D0%AD%D0%A1'},
+  {id:'paraskeva',title:'⛪ Караульная гора',coords:[56.0153,92.8856],
+   desc:'Символ Красноярска с часовней Параскевы Пятницы и панорамой на слияние Качи и Енисея. Легенды о караулах со времён острога. Лучшее место для закатов.',
+   img:'https://placehold.co/600x360?text=%D0%9A%D0%B0%D1%80%D0%B0%D1%83%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F'},
+  {id:'surikov',title:'🖼️ Дом-музей Сурикова',coords:[56.01,92.875],
+   desc:'Дом XIX века: атмосфера сибирской усадьбы, подлинные вещи семьи, штрихи к биографии художника.',
+   img:'https://placehold.co/600x360?text=%D0%A1%D1%83%D1%80%D0%B8%D0%BA%D0%BE%D0%B2'},
+  {id:'kansk',title:'🏘️ Канск',coords:[56.204,95.705],
+   desc:'Город мастеров: деревянное кружево и индустрия. Фестивали и ремесленная культура востока края.',
+   img:'https://placehold.co/600x360?text=%D0%9A%D0%B0%D0%BD%D1%81%D0%BA'},
+  {id:'yeniseisk',title:'🏛️ Енисейск',coords:[58.451,92.173],
+   desc:'Купеческий город-музей: соборы, торговые ряды, палаты. Северное барокко и речные пути.',
+   img:'https://placehold.co/600x360?text=%D0%95%D0%BD%D0%B8%D1%81%D0%B5%D0%B9%D1%81%D0%BA'},
+  {id:'vivi',title:'📍 Озеро Виви',coords:[64.65,100.45],
+   desc:'Географический центр России: тёмная вода болотных берегов и абсолютная тишина.',
+   img:'https://placehold.co/600x360?text=%D0%92%D0%B8%D0%B2%D0%B8'},
+  {id:'putorana',title:'🌋 Плато Путорана',coords:[69.0,94.0],
+   desc:'Каньоны, водопады и озёрные «фьорды» базальтовых плато. Заповедная глушь и «большая тишина».',
+   img:'https://placehold.co/600x360?text=%D0%9F%D1%83%D1%82%D0%BE%D1%80%D0%B0%D0%BD%D0%B0'},
+  {id:'dudinka',title:'⚓ Дудинка',coords:[69.405,86.173],
+   desc:'Арктический порт — ворота в Карское море. Полярные ночи и бесконечные широты.',
+   img:'https://placehold.co/600x360?text=%D0%94%D1%83%D0%B4%D0%B8%D0%BD%D0%BA%D0%B0'},
+  {id:'norilsk',title:'🏭 Норильск',coords:[69.355,88.189],
+   desc:'Заполярный мегаполис на вечной мерзлоте. Контраст тундры и северного модернизма.',
+   img:'https://placehold.co/600x360?text=%D0%9D%D0%BE%D1%80%D0%B8%D0%BB%D1%8C%D1%81%D0%BA'},
+  {id:'taimyr',title:'🦌 Таймырский заповедник',coords:[72.0,100.0],
+   desc:'Тундра, стада диких северных оленей, прибрежные птичьи базары. Земля ветров и широт.',
+   img:'https://placehold.co/600x360?text=%D0%A2%D0%B0%D0%B9%D0%BC%D1%8B%D1%80'}
+];
+
+/* =================== УПРАВЛЯЕМЫЙ ТУР =================== */
+let currentStopIndex = 0;
+let journeyStarted = false;
+const visitedStops = new Set();
+const collected = new Set();
+let currentLocationId = null;
+
+function startJourney() {
+  document.getElementById('welcomeScreen').style.display = 'none';
+  journeyStarted = true;
+  currentStopIndex = 0;
+
+  // Очищаем данные
+  visitedStops.clear();
+  collected.clear();
+
+  // Показываем первую локацию
+  showLocationSlider(stops[0]);
+
+  // Устанавливаем карту и путника
+  initializeMap();
+}
+
+function showLocationSlider(stop) {
+  currentLocationId = stop.id;
+  const slider = document.getElementById('locationSlider');
+
+  document.getElementById('sliderImage').src = stop.img;
+  document.getElementById('sliderTitle').textContent = stop.title;
+  document.getElementById('sliderDescription').textContent = stop.desc;
+
+  updateSliderControls();
+  slider.style.display = 'flex';
+}
+
+function closeLocationSlider() {
+  document.getElementById('locationSlider').style.display = 'none';
+}
+
+function updateSliderControls() {
+  const isCollected = collected.has(currentLocationId);
+  const isVisited = visitedStops.has(currentLocationId);
+  const canProceed = currentStopIndex < stops.length - 1;
+
+  // Обновляем кнопку сбора печати
+  const collectBtn = document.getElementById('collectBtn');
+  collectBtn.textContent = isCollected ? 'Печать получена ✔' : 'Забрать печать';
+  collectBtn.disabled = isCollected;
+
+  // Обновляем кнопку следующей точки
+  const nextBtn = document.getElementById('nextLocationBtn');
+  nextBtn.style.display = canProceed ? 'block' : 'none';
+
+  // Обновляем прогресс
+  document.getElementById('stampsCount').textContent = collected.size;
+  document.getElementById('sliderProgress').style.width = (collected.size / stops.length * 100) + '%';
+}
+
+function collectCurrentStamp() {
+  if (!collected.has(currentLocationId)) {
+    collected.add(currentLocationId);
+    updateSliderControls();
+  }
+}
+
+function proceedToNext() {
+  if (currentStopIndex < stops.length - 1) {
+    visitedStops.add(currentLocationId);
+    currentStopIndex++;
+    showLocationSlider(stops[currentStopIndex]);
+    moveToCurrentLocation();
+  }
+}
+
+function nextStop() {
+  if (currentStopIndex < stops.length - 1) {
+    currentStopIndex++;
+    showLocationSlider(stops[currentStopIndex]);
+    moveToCurrentLocation();
+  }
+}
+
+function prevStop() {
+  if (currentStopIndex > 0) {
+    currentStopIndex--;
+    showLocationSlider(stops[currentStopIndex]);
+    moveToCurrentLocation();
+  }
+}
+
+/* =================== КАРТА =================== */
+let map, traveler;
+
+function initializeMap() {
+  map = L.map('map', {
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    boxZoom: false,
+    keyboard: false,
+    touchZoom: false,
+    zoomControl: false
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Создаем путника
+  const travelerIcon = L.divIcon({
+    html: '<div class="traveler">🧭</div>',
+    className: '',
+    iconSize: [40, 40],
+    iconAnchor: [20, 35]
+  });
+
+  traveler = L.marker(stops[0].coords, {icon: travelerIcon}).addTo(map);
+
+  // Устанавливаем вид на первую локацию
+  map.setView(stops[0].coords, 10);
+}
+
+function moveToCurrentLocation() {
+  if (traveler && map) {
+    const coords = stops[currentStopIndex].coords;
+    traveler.setLatLng(coords);
+    map.setView(coords, 10);
+  }
+}
+
+// Глобальные функции
+window.startJourney = startJourney;
+window.closeLocationSlider = closeLocationSlider;
+window.collectCurrentStamp = collectCurrentStamp;
+window.proceedToNext = proceedToNext;
+window.nextStop = nextStop;
+window.prevStop = prevStop;
+
+</script>
+</body>
+</html>
