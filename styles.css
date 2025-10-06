@@ -538,12 +538,12 @@ body {
     height: 100%;
     background: linear-gradient(135deg, var(--sand) 0%, var(--paper) 100%);
     z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 .welcome-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     text-align: center;
     max-width: 500px;
     padding: 40px;
@@ -553,23 +553,24 @@ body {
     box-shadow:
         4px 4px 0 #e2b33b,
         0 8px 32px rgba(0, 0, 0, 0.1);
+    z-index: 1;
 }
 .welcome-credits {
-    position: fixed;
-    bottom: 40px;
-    left: 40px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #533c2a;
-    text-align: left;
-    padding: 16px 20px;
-    background: rgba(255, 247, 207, 0.95);
-    border-radius: 12px;
-    border: 3px solid #f4cc63;
+    position: absolute !important;
+    bottom: 40px !important;
+    right: 40px !important;
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+    color: #533c2a !important;
+    text-align: left !important;
+    padding: 20px 24px !important;
+    background: rgba(255, 247, 207, 0.95) !important;
+    border-radius: 16px !important;
+    border: 3px solid #f4cc63 !important;
     box-shadow:
-        3px 3px 0 #e2b33b,
-        0 6px 24px rgba(0, 0, 0, 0.1);
-    z-index: 10000;
+        4px 4px 0 #e2b33b,
+        0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    z-index: 2 !important;
 }
 .welcome-title {
     font-family: "Fredoka", sans-serif;
