@@ -531,18 +531,19 @@ body {
 
 /* Экран приветствия */
 .welcome-screen {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, var(--sand) 0%, var(--paper) 100%);
     z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 .welcome-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     text-align: center;
     max-width: 500px;
     padding: 40px;
@@ -552,6 +553,23 @@ body {
     box-shadow:
         4px 4px 0 #e2b33b,
         0 8px 32px rgba(0, 0, 0, 0.1);
+}
+.welcome-credits {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #533c2a;
+    text-align: left;
+    padding: 16px 20px;
+    background: rgba(255, 247, 207, 0.95);
+    border-radius: 12px;
+    border: 3px solid #f4cc63;
+    box-shadow:
+        3px 3px 0 #e2b33b,
+        0 6px 24px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
 }
 .welcome-title {
     font-family: "Fredoka", sans-serif;
